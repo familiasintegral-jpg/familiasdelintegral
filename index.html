@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Directorio de Familias – CINA</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde:    #2D6A4F;
+    --bg:       #FAF8F4;
+    --blanco:   #FFFFFF;
+    --texto:    #1A1A1A;
+    --texto-2:  #5A5A5A;
+    --borde:    #E0DDD5;
+    --radio:    14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--texto); min-height: 100vh; }
+
+  header { background: var(--verde); color: white; padding: 2.5rem 1.5rem 2rem; text-align: center; }
+  header h1 { font-family: 'Fraunces', serif; font-size: clamp(1.6rem, 5vw, 2.4rem); font-weight: 600; letter-spacing: -0.5px; margin-bottom: 6px; }
+  header p { font-size: 0.95rem; opacity: 0.85; }
+
+  .controles { position: sticky; top: 0; z-index: 50; background: var(--blanco); border-bottom: 1px solid var(--borde); padding: 1rem 1.5rem; }
+  .buscar-wrap { max-width: 560px; margin: 0 auto 0.75rem; position: relative; }
+  .buscar-wrap input { width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; border: 1.5px solid var(--borde); border-radius: 50px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; background: var(--bg); color: var(--texto); outline: none; transition: border-color .2s; }
+  .buscar-wrap input:focus { border-color: var(--verde); }
+  .buscar-wrap svg { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: #888; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .rubros { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .rubro-btn { font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 500; padding: 5px 13px; border-radius: 50px; border: 1.5px solid transparent; cursor: pointer; background: #F0EFEA; color: #4A4A4A; transition: all .15s; }
+  .rubro-btn:hover { filter: brightness(0.93); }
+  .rubro-btn.activo { background: var(--verde); color: white; border-color: var(--verde); }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+  .conteo { font-size: 0.82rem; color: var(--texto-2); margin-bottom: 1rem; }
+
+  .grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .tarjeta { background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); padding: 1.1rem 1.2rem; cursor: pointer; transition: box-shadow .2s, transform .15s; }
+  .tarjeta:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.08); transform: translateY(-2px); }
+
+  .etiqueta { font-size: 0.7rem; font-weight: 500; padding: 3px 10px; border-radius: 50px; display: inline-block; margin-bottom: 9px; }
+  .tarjeta-nombre { font-family: 'Fraunces', serif; font-size: 1rem; font-weight: 500; color: var(--texto); margin-bottom: 3px; line-height: 1.3; }
+  .tarjeta-persona { font-size: 0.78rem; color: var(--texto-2); margin-bottom: 7px; }
+  .tarjeta-desc { font-size: 0.8rem; color: var(--texto-2); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .modal-fondo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-fondo.abierto { display: flex; }
+  .modal { background: var(--blanco); border-radius: var(--radio); padding: 1.75rem; max-width: 480px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative; animation: aparecer .2s ease; }
+  @keyframes aparecer { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  .modal-cerrar { position: absolute; top: 1rem; right: 1rem; background: #F0EFEA; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1rem; cursor: pointer; color: #4A4A4A; display: flex; align-items: center; justify-content: center; }
+  .modal-etiqueta { font-size: 0.7rem; font-weight: 500; padding: 3px 10px; border-radius: 50px; display: inline-block; margin-bottom: 10px; }
+  .modal-nombre { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 600; margin-bottom: 4px; line-height: 1.3; }
+  .modal-persona { font-size: 0.85rem; color: var(--texto-2); margin-bottom: 14px; }
+  .modal-desc { font-size: 0.88rem; color: var(--texto-2); line-height: 1.65; white-space: pre-line; margin-bottom: 16px; }
+  .modal-links { display: flex; flex-direction: column; gap: 7px; border-top: 1px solid var(--borde); padding-top: 14px; }
+  .modal-link { font-size: 0.82rem; color: var(--texto-2); display: flex; align-items: flex-start; gap: 7px; }
+  .modal-link a { color: #1D5B9E; word-break: break-all; }
+  .modal-link a:hover { text-decoration: underline; }
+
+  .vacio { text-align: center; padding: 3rem 1rem; color: var(--texto-2); font-size: 0.95rem; }
+
+  @media (max-width: 500px) {
+    header { padding: 1.75rem 1rem 1.5rem; }
+    .controles { padding: 0.85rem 1rem; }
+    main { padding: 1rem 0.85rem 2.5rem; }
+    .modal { padding: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Directorio de Familias CINA</h1>
+  <p>Emprendimientos, oficios y profesiones de nuestra comunidad</p>
+</header>
+
+<div class="controles">
+  <div class="buscar-wrap">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="buscar" placeholder="Buscar por nombre, servicio o familia..." oninput="filtrar()">
+  </div>
+  <div class="rubros" id="rubros"></div>
+</div>
+
+<main>
+  <div class="conteo" id="conteo"></div>
+  <div class="grilla" id="grilla"></div>
+</main>
+
+<div class="modal-fondo" id="modal-fondo" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal">
+    <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+    <div id="modal-interior"></div>
+  </div>
+</div>
+
+<script>
+/* =================================================================
+   ✏️  ZONA DE EDICIÓN — ACÁ PODÉS MODIFICAR LOS EMPRENDIMIENTOS
+   =================================================================
+
+   RUBROS disponibles (copiá exactamente este texto en cada entrada):
+     "Salud y bienestar"
+     "Arte y creatividad"
+     "Educación y clases"
+     "Tecnología"
+     "Gastronomía y viajes"
+     "Servicios del hogar"
+     "Moda e indumentaria"
+     "Profesionales"
+     "Otros"
+
+   CAMPOS de cada emprendimiento:
+     nombre  → Nombre del emprendimiento o servicio  (obligatorio)
+     persona → Nombre/s de la familia               (podés dejarlo "")
+     grado   → Sala o grado al que asiste           (podés dejarlo "")
+     tel     → Teléfono de contacto                 (podés dejarlo "")
+     ig      → Nombre de usuario en Instagram       (podés dejarlo "")
+     web     → Sitio web completo o parcial          (podés dejarlo "")
+     mail    → Correo electrónico                   (podés dejarlo "")
+     desc    → Descripción del servicio             (recomendado)
+     rubro   → Uno de los rubros de la lista arriba (obligatorio)
+
+   ➕ PARA AGREGAR UNA FAMILIA NUEVA:
+      1. Copiá un bloque completo (desde el { hasta el },)
+      2. Pegalo antes del ];  que está al final de la lista
+      3. Completá los datos entre las comillas
+      4. Guardá el archivo y volvé a subirlo a Netlify
+
+   ➖ PARA ELIMINAR UNA FAMILIA:
+      1. Buscá el bloque con Ctrl+F (o Cmd+F en Mac)
+      2. Borrá todo desde el { hasta el },  inclusive
+      3. Guardá el archivo y volvé a subirlo a Netlify
+
+   📝 NOTAS:
+      - Los textos van siempre entre comillas "así"
+      - Si un dato no existe, escribí dos comillas vacías: ""
+      - No borres las comas que separan los campos
+      - Para saltar de línea dentro de una descripción, escribí \n
+   ================================================================= */
+
+const EMPRENDIMIENTOS = [
+
+  { nombre: "Psicóloga holística",
+    persona: "Natalie Garcia Hadeler",
+    grado:   "2° Rojo",
+    tel:     "Celular Natalie",
+    ig:      "",
+    web:     "",
+    mail:    "",
+    desc:    "Psicóloga de niñxs: terapia convencional con arteterapia y homeopatía.\nPsicóloga de adultxs: reiki, sonoterapia con cuencos tibetanos, aromaterapia.\nPerspectiva de género en toda atención.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Contador",
+    persona: "Mariano Russo",
+    grado:   "6° Turquesa / 1° Azul",
+    tel:     "Celular Mariano",
+    ig:      "",
+    web:     "",
+    mail:    "",
+    desc:    "Servicios de contabilidad.",
+    rubro:   "Profesionales" },
+
+  { nombre: "Artista visual / La Tortuga Pintora",
+    persona: "Melina Saredo",
+    grado:   "2° grado / Sala 4B",
+    tel:     "Celular Melina",
+    ig:      "Melina Sarcedo Arte / La Tortuga Pintora",
+    web:     "https://melinasaredo.wixsite.com/artes",
+    mail:    "melinasaredo@gmail.com",
+    desc:    "Artista visual emprendedora. Murales a pedido personalizados (infantiles, comerciales).\nTaller de arte La Tortuga Pintora en Club GEVP, Villa del Parque.",
+    rubro:   "Arte y creatividad" },
+
+  { nombre: "Mano Verde Slow Beauty",
+    persona: "Samanta Perez",
+    grado:   "1° Verde",
+    tel:     "Celular Samanta",
+    ig:      "Mano Verde Slow Beauty",
+    web:     "",
+    mail:    "manoverde@outlook.com.ar",
+    desc:    "Curaduría de cosmética orgánica, frecuencial y dermatológica clean. Todos los productos son ecológicos, sin género y cruelty free.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Hard Core Studio Pilates",
+    persona: "Samanta Perez",
+    grado:   "1° Verde",
+    tel:     "Celular Samanta",
+    ig:      "Hard Core Studio Pilates",
+    web:     "",
+    mail:    "",
+    desc:    "Estudio de Pilates boutique (máx. 4 alumnxs) en Devoto. Movimiento consciente y entrenamiento para la salud.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Asesor medicina prepaga OMINT",
+    persona: "Gerardo Capanna",
+    grado:   "5° Amarillo / Sala 5",
+    tel:     "Celular Gerardo",
+    ig:      "",
+    web:     "",
+    mail:    "gcapanna@omint.com.ar",
+    desc:    "Asesoramiento en cobertura y planes de salud OMINT. Asistencia al viajero.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Portarretratos LPH",
+    persona: "José Luis Vecchio",
+    grado:   "6° Magenta",
+    tel:     "Celular José Luis",
+    ig:      "LPHyPehuen | marcos",
+    web:     "",
+    mail:    "",
+    desc:    "Taller de marcos para cuadros. Todo tipo de enmarcaciones y portarretratos al por mayor. Más de 25 años en el mercado, en CABA y varias provincias.",
+    rubro:   "Arte y creatividad" },
+
+  { nombre: "Equipo CorporalMente",
+    persona: "Belén",
+    grado:   "3° Bordó / Sala 4A",
+    tel:     "Celular Belén",
+    ig:      "Equipo CorporalMente",
+    web:     "",
+    mail:    "equipocorporalmente@gmail.com",
+    desc:    "Psicomotricidad, psicología, psicopedagogía, fonoaudiología y talleres de habilidades sociales. Barrio de Liniers. Obras sociales y prepagas.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Fofura Juguetes",
+    persona: "Gabriela y Patricio",
+    grado:   "5° Lila / 3° Naranja",
+    tel:     "Celular Gabriela",
+    ig:      "Pop simil funko",
+    web:     "fofurajuguetes.empretienda.com.ar",
+    mail:    "",
+    desc:    "Venta de juguetes símil Lego y símil Funko Pop de excelente calidad. Villa del Parque, CABA.",
+    rubro:   "Otros" },
+
+  { nombre: "Escuela de Danzas Tiempo Jazz",
+    persona: "Gabriela Etcheberry",
+    grado:   "3° grado / Sala 4A",
+    tel:     "4502-5692",
+    ig:      "Tiempo Jazz",
+    web:     "",
+    mail:    "",
+    desc:    "Escuela de danzas. Concordia 3505, CABA.",
+    rubro:   "Educación y clases" },
+
+  { nombre: "Abogado – sucesiones y laboral",
+    persona: "Pablo Claverie",
+    grado:   "3° Bordó",
+    tel:     "Celular Pablo",
+    ig:      "",
+    web:     "",
+    mail:    "drclaverie@hotmail.com",
+    desc:    "Abogado especializado en sucesiones y derecho laboral.\nEstudio: Av. Álvarez Jonte 3875, PB 1.",
+    rubro:   "Profesionales" },
+
+  { nombre: "Gráficas comerciales / Carpintería",
+    persona: "Fernando Rodriguez Palavecino",
+    grado:   "3° Bordó / Sala 5",
+    tel:     "Celular Fernando",
+    ig:      "",
+    web:     "",
+    mail:    "",
+    desc:    "Gráficas comerciales y carpintería.",
+    rubro:   "Servicios del hogar" },
+
+  { nombre: "Un Pez Soluble",
+    persona: "Nadia",
+    grado:   "2° Rojo",
+    tel:     "Celular Nadia",
+    ig:      "Un Pez Soluble",
+    web:     "www.unpezsoluble.com.ar",
+    mail:    "unpezsoluble@gmail.com",
+    desc:    "Emprendimiento de accesorios textiles: bolsos, riñoneras, neceseres.",
+    rubro:   "Moda e indumentaria" },
+
+  { nombre: "Ludoteca Rodante",
+    persona: "Soledad",
+    grado:   "5° Lila",
+    tel:     "Celular Soledad",
+    ig:      "Ludoteca Rodante",
+    web:     "https://ludotecarodante.empretienda.com.ar/",
+    mail:    "ludoteca.tienda@gmail.com",
+    desc:    "Espacio pedagógico de juego libre para bebés hasta 10 años. Ludoteca libre con distintos sectores de juego donde cada niñx juega a su tiempo. Con o sin familias.",
+    rubro:   "Educación y clases" },
+
+  { nombre: "Éxodo Mapache",
+    persona: "Brian",
+    grado:   "2° Celeste / Sala 3",
+    tel:     "Celular Brian",
+    ig:      "Éxodo Mapache",
+    web:     "",
+    mail:    "exodomapache@gmail.com",
+    desc:    "Traslado de pasajeros para eventos: corporativo, casamientos, cumpleaños, viajes a la costa y al interior. Van de 19 pasajeros. Red de vehículos de 5 a 66 pasajeros.",
+    rubro:   "Gastronomía y viajes" },
+
+  { nombre: "Paula Ledesma Knitwear",
+    persona: "Barbara y Paula Ledesma",
+    grado:   "Sala 5A",
+    tel:     "Celular Paula",
+    ig:      "Paula Ledesma Knitwear",
+    web:     "https://www.paulaledesma.com.ar/",
+    mail:    "tiendapaulaledesma@gmail.com",
+    desc:    "Prendas tejidas, diseño y producción argentina.",
+    rubro:   "Moda e indumentaria" },
+
+  { nombre: "Desayunos Personalizados",
+    persona: "Irina",
+    grado:   "4° Rosa",
+    tel:     "Celular Irina",
+    ig:      "Desayunos Personalizados",
+    web:     "www.desayunospersonalizados.com",
+    mail:    "",
+    desc:    "Demostrá lo que sentís, decilo con un desayuno. Envíos en CABA y GBA.",
+    rubro:   "Gastronomía y viajes" },
+
+  { nombre: "Lic. Johanna Raubian – Psicoanalista",
+    persona: "Johanna",
+    grado:   "4° Rosa / 1° Azul",
+    tel:     "Celular Johanna",
+    ig:      "",
+    web:     "",
+    mail:    "johanna.raubian@gmail.com",
+    desc:    "Psicoanalista MN 53.657 con perspectiva de género. Clínica de adultxs y adolescentes. Atención virtual y presencial. Consultorio en Villa Luro.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Famiglia Viajes",
+    persona: "Ezequiel Smiriglia",
+    grado:   "4° Rosa / 1° Azul",
+    tel:     "Celular Ezequiel",
+    ig:      "Famiglia Viajes",
+    web:     "",
+    mail:    "",
+    desc:    "Agente de viajes.",
+    rubro:   "Gastronomía y viajes" },
+
+  { nombre: "The Avocado Company",
+    persona: "Ezequiel Smiriglia",
+    grado:   "4° Rosa / 1° Azul",
+    tel:     "Celular Ezequiel",
+    ig:      "The Avocado Company",
+    web:     "",
+    mail:    "",
+    desc:    "Empresario gastronómico.",
+    rubro:   "Gastronomía y viajes" },
+
+  { nombre: "Valhalla Bar Vikingo",
+    persona: "Ezequiel Smiriglia",
+    grado:   "4° Rosa / 1° Azul",
+    tel:     "Celular Ezequiel",
+    ig:      "Valhalla Bar Vikingo",
+    web:     "",
+    mail:    "",
+    desc:    "Empresario gastronómico.",
+    rubro:   "Gastronomía y viajes" },
+
+  { nombre: "Correctora de textos",
+    persona: "Milagros Schroder",
+    grado:   "2° Rojo / Sala 4A",
+    tel:     "Celular Milagros",
+    ig:      "",
+    web:     "",
+    mail:    "milischu@gmail.com",
+    desc:    "Correctora de textos en español y asesora lingüística con perspectiva de derechos.",
+    rubro:   "Profesionales" },
+
+  { nombre: "Macetela",
+    persona: "Diego y Tatiana",
+    grado:   "4° grado / 1° Verde",
+    tel:     "Celular Tatiana",
+    ig:      "Mace Tela",
+    web:     "www.macetela.com.ar",
+    mail:    "contacto@macetela.com.ar",
+    desc:    "Macetas de tela fabricadas a partir de botellas plásticas recicladas.",
+    rubro:   "Arte y creatividad" },
+
+  { nombre: "Mi Tienda Flor",
+    persona: "Gisela",
+    grado:   "5° Lila",
+    tel:     "",
+    ig:      "Mi Tienda Flor",
+    web:     "",
+    mail:    "giselasala@yahoo.com.ar",
+    desc:    "Velas de soja, box de regalos, difusores, perfume de ambiente y suculentas.",
+    rubro:   "Arte y creatividad" },
+
+  { nombre: "Mariela Profe de Lengua",
+    persona: "Mariela",
+    grado:   "2° Rojo",
+    tel:     "Celular Mariela",
+    ig:      "Mariela Profe de Lengua",
+    web:     "https://marielapalacios.com.ar/idioma.html",
+    mail:    "marielappalacios@gmail.com",
+    desc:    "Clases particulares de lengua y literatura para secundaria y apoyo escolar en primaria. Por Google Meet, individuales o grupales.",
+    rubro:   "Educación y clases" },
+
+  { nombre: "Rocío Doula",
+    persona: "Rocio Lopez Serrot",
+    grado:   "4° Rosa",
+    tel:     "Celular Rocío",
+    ig:      "Rocío Doula",
+    web:     "",
+    mail:    "rociogarua@gmail.com",
+    desc:    "Doula y puericultora. Masajes terapéuticos y Rebozo en gestación y post parto. Coordinación de ceremonias de Cierre.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Ayres IT",
+    persona: "Rodrigo y Carolina",
+    grado:   "3° Bordó",
+    tel:     "",
+    ig:      "Ayres IT",
+    web:     "https://ayresit.com.ar/",
+    mail:    "rmarcos@ayresit.com.ar",
+    desc:    "Sistemas de punto de venta: AyresPOP, AyresERP, AyresBoard, AyresSueldos. Soluciones informáticas para empresas. Más de 15 años en el mercado.",
+    rubro:   "Tecnología" },
+
+  { nombre: "TuSolucionIT",
+    persona: "Sebastián Ferraro",
+    grado:   "Sala 5",
+    tel:     "Celular Sebastián",
+    ig:      "",
+    web:     "",
+    mail:    "sebastianferraro21@gmail.com",
+    desc:    "Ingeniería en sistemas: reparación y armado de PCs, diseño de redes y servidores, consultoría en seguridad informática, capacitación IT.",
+    rubro:   "Tecnología" },
+
+  { nombre: "Clases de dibujo/pintura y neuropsicología",
+    persona: "Araceli Chiodi",
+    grado:   "3° Bordó / 1° Verde",
+    tel:     "Celular Araceli",
+    ig:      "Ara Chiodi",
+    web:     "",
+    mail:    "araceli.chiodi@gmail.com",
+    desc:    "Clases de dibujo y pintura figurativa (cerca del cole).\nNeuropsicóloga: evaluaciones y tratamientos de rehabilitación neurocognitiva en adultos.",
+    rubro:   "Educación y clases" },
+
+  { nombre: "Lic. Xoana Casanova – Psicóloga",
+    persona: "Xoana",
+    grado:   "3° grado",
+    tel:     "Celular Xoana",
+    ig:      "Habla el algarrobo",
+    web:     "",
+    mail:    "licxoanacasanova@gmail.com",
+    desc:    "Psicóloga. Atención presencial y virtual a niños/as, adolescentes, adultos y orientación a padres. Consultorio en Villa Urquiza.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Motivos Para Quererte",
+    persona: "Julieta y Giselle",
+    grado:   "5° Lila / 3° Naranja",
+    tel:     "1165697350 / 1150393219",
+    ig:      "Motivos Para Quererte",
+    web:     "www.motivosparaquererte.com.ar",
+    mail:    "motivosparaquererte@gmail.com",
+    desc:    "Disfraces y prendas para infancias. Desde 2011. Personajes que invitan al juego y la fantasía para los más peques.",
+    rubro:   "Moda e indumentaria" },
+
+  { nombre: "Jazmín Arellano Fotografía",
+    persona: "Jazmín",
+    grado:   "1° Azul",
+    tel:     "Celular Jazmín",
+    ig:      "Jazmin Arellano Fotografia",
+    web:     "jazminsemilla.wixsite.com",
+    mail:    "jazminarellanofoto@gmail.com",
+    desc:    "Retratos empresariales grupales e individuales, ejecutivos, foto de producto, gastronomía, editoriales y eventos empresariales.",
+    rubro:   "Arte y creatividad" },
+
+  { nombre: "Fedezm Electrónica",
+    persona: "Federico Zmesones",
+    grado:   "5° B",
+    tel:     "Celular Federico",
+    ig:      "Fedezm",
+    web:     "",
+    mail:    "",
+    desc:    "Venta de productos Apple y electrónica en general.",
+    rubro:   "Tecnología" },
+
+  { nombre: "La Bodeguita de González",
+    persona: "",
+    grado:   "2° grado / 6° grado",
+    tel:     "Celular",
+    ig:      "La Bodeguita de Gonzalez",
+    web:     "",
+    mail:    "labodeguitadegonzalez@hotmail.com",
+    desc:    "Tienda virtual de vinos y afines. Catas y degustaciones.",
+    rubro:   "Gastronomía y viajes" },
+
+  { nombre: "F5 Comunicación",
+    persona: "Romina Cantizano",
+    grado:   "2° Rojo / Sala 5B",
+    tel:     "Celular Romina",
+    ig:      "F5 Comunicación",
+    web:     "www.f5comunicacion.com",
+    mail:    "info@f5comunicacion.com",
+    desc:    "Consultora de marketing digital y comunicación. Especializada en automatización de emprendimientos y negocios.",
+    rubro:   "Tecnología" },
+
+  { nombre: "Compañía Teatral El Manzano",
+    persona: "Sofia",
+    grado:   "2° Celeste",
+    tel:     "Celular Sofia",
+    ig:      "La niña que fue Cyrano",
+    web:     "",
+    mail:    "",
+    desc:    "Obra teatral 'La niña que fue Cyrano'. Hacemos funciones para escuelas también.",
+    rubro:   "Arte y creatividad" },
+
+  { nombre: "Pintor del hogar",
+    persona: "Sergio Gonzales Grutter",
+    grado:   "3° Bordó",
+    tel:     "Celular Sergio",
+    ig:      "Gonzalez Grutter",
+    web:     "https://www.facebook.com/pinturaymantenimientodelhogar",
+    mail:    "",
+    desc:    "Pintor de pared, terrazas, cielo raso, rejas, madera y aberturas. Casas, departamentos y locales. Monotributo y seguro de vida.",
+    rubro:   "Servicios del hogar" },
+
+  { nombre: "Juliana Pirozzo – Coach",
+    persona: "Juliana Pirozzo",
+    grado:   "5° Amarillo",
+    tel:     "Celular Juliana",
+    ig:      "Juliana Pirozzo Coach",
+    web:     "",
+    mail:    "julianapirozzocoach@gmail.com",
+    desc:    "Coach ejecutiva y organizacional. Consultoría y cursos de habilidades blandas. Acompaña personas y organizaciones en el logro de objetivos.",
+    rubro:   "Profesionales" },
+
+  { nombre: "Lic. Luciana Slipakoff – Psicóloga",
+    persona: "Luciana Slipakoff",
+    grado:   "Sala 2A / 1° Verde",
+    tel:     "Celular Luciana",
+    ig:      "Luciana Slipakoff",
+    web:     "",
+    mail:    "Lslipakoff@gmail.com",
+    desc:    "Psicóloga UBA, especialista en gerontología. Atención de jóvenes, adultxs y personas mayores. Consultorio en Monte Castro.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Maria Paula Gerardi – Cuentos y psicología",
+    persona: "Maria Paula Gerardi",
+    grado:   "Sala 2B",
+    tel:     "Celular Maria Paula",
+    ig:      "Maria Paula Gerardi",
+    web:     "",
+    mail:    "mariapaulagerardi@gmail.com",
+    desc:    "Psicóloga y ex maestra jardinera. Reseña y crea cuentos para acompañar procesos de crianza y desarrollo infantil.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Familia Palenzuela – Servicios varios",
+    persona: "Familia Palenzuela",
+    grado:   "Sala 4B",
+    tel:     "Celular",
+    ig:      "",
+    web:     "https://www.mercadolibre.com.ar/perfil/CUENCAPETSHOP",
+    mail:    "astor1989@hotmail.com",
+    desc:    "Compra/venta de divisas. Logística y transporte de mercaderías en CABA y alrededores. Havaianas y Bagunza. Petshop y veterinaria para mascotas. Galería Cuenca 2840.",
+    rubro:   "Otros" },
+
+  { nombre: "Espacio Elementos – Lic. Nadia Tartalo",
+    persona: "Nadia Tartalo",
+    grado:   "1° Azul",
+    tel:     "",
+    ig:      "Lic. Nadia Tartalo",
+    web:     "",
+    mail:    "natartalo@gmail.com",
+    desc:    "Arte y aprendizaje. Psicopedagogía, yoga para infancias, estimulación temprana, gimnasia para mamás y nutrición. Trabajo interdisciplinario.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Episodio Cuatro",
+    persona: "Rocío Ana Hilovera",
+    grado:   "1° Azul",
+    tel:     "Celular Rocío",
+    ig:      "Episodio Cuatro",
+    web:     "",
+    mail:    "rocioanahilovera@gmail.com",
+    desc:    "Prendas y bolsas de lienzo 100% personalizadas.",
+    rubro:   "Moda e indumentaria" },
+
+  { nombre: "Eseyka People Consulting",
+    persona: "Nicolás Schvartzer",
+    grado:   "Sala 2A / Sala 2B",
+    tel:     "Celular Nicolás",
+    ig:      "Eseyka People Consulting",
+    web:     "www.eseyka.com",
+    mail:    "Hola@eseyka.com",
+    desc:    "Consultora de desarrollo profesional. Especializada en desarrollo de resultados y cultura organizacional a través del liderazgo.",
+    rubro:   "Profesionales" },
+
+  { nombre: "Psicóloga infanto-juvenil",
+    persona: "",
+    grado:   "2° Rojo",
+    tel:     "Celular",
+    ig:      "",
+    web:     "",
+    mail:    "Licencia.devida@gmail.com",
+    desc:    "Atención a niñeces y adolescentes desde un abordaje de crianza respetuosa.",
+    rubro:   "Salud y bienestar" },
+
+  { nombre: "Innova Ingeniería",
+    persona: "Eugenia Gamband",
+    grado:   "5° Amarillo",
+    tel:     "Celular Eugenia",
+    ig:      "",
+    web:     "https://www.linkedin.com/in/eugenia-gambande",
+    mail:    "Eugenia.Gambande@innovaing.net",
+    desc:    "Proyectos de ingeniería civil estructural. Soluciones a problemas complejos.",
+    rubro:   "Profesionales" },
+
+]; /* ← NO BORRAR ESTA LÍNEA */
+
+/* =================================================================
+   MOTOR DEL DIRECTORIO — NO MODIFICAR LO QUE SIGUE
+   ================================================================= */
+
+const COLORES = {
+  "Salud y bienestar":    { bg: "#D8F3DC", color: "#2D6A4F" },
+  "Arte y creatividad":   { bg: "#FFD6E0", color: "#C9184A" },
+  "Educación y clases":   { bg: "#EDE0FF", color: "#5A3E85" },
+  "Tecnología":           { bg: "#D0E9FF", color: "#1D5B9E" },
+  "Gastronomía y viajes": { bg: "#FFE8CC", color: "#9B4F1A" },
+  "Servicios del hogar":  { bg: "#F0EFEA", color: "#4A4A4A" },
+  "Moda e indumentaria":  { bg: "#FFE8CC", color: "#7A3E00" },
+  "Profesionales":        { bg: "#D0F0F0", color: "#1A6B6B" },
+  "Otros":                { bg: "#FFF3C4", color: "#7A5C00" },
+};
+
+const RUBROS_ORDEN = [
+  "Salud y bienestar","Arte y creatividad","Educación y clases",
+  "Tecnología","Gastronomía y viajes","Servicios del hogar",
+  "Moda e indumentaria","Profesionales","Otros"
+];
+
+let filtroRubro = "Todos";
+let textoBusqueda = "";
+
+function estiloEtiqueta(rubro) {
+  const c = COLORES[rubro] || COLORES["Otros"];
+  return `background:${c.bg};color:${c.color}`;
+}
+
+function renderRubros() {
+  const cont = document.getElementById("rubros");
+  const todos = ["Todos", ...RUBROS_ORDEN];
+  cont.innerHTML = todos.map(r =>
+    `<button class="rubro-btn${filtroRubro===r?" activo":""}" onclick="setRubro('${r.replace(/'/g,"\\'")}')"> ${r}</button>`
+  ).join("");
+}
+
+function setRubro(r) { filtroRubro = r; renderRubros(); renderGrilla(); }
+function filtrar() { textoBusqueda = document.getElementById("buscar").value.toLowerCase(); renderGrilla(); }
+
+function renderGrilla() {
+  const items = EMPRENDIMIENTOS.filter(d => {
+    const okRubro = filtroRubro === "Todos" || d.rubro === filtroRubro;
+    const q = textoBusqueda;
+    const okQ = !q
+      || d.nombre.toLowerCase().includes(q)
+      || (d.persona||"").toLowerCase().includes(q)
+      || (d.desc||"").toLowerCase().includes(q)
+      || (d.grado||"").toLowerCase().includes(q)
+      || d.rubro.toLowerCase().includes(q);
+    return okRubro && okQ;
+  });
+
+  document.getElementById("conteo").textContent =
+    items.length + " emprendimiento" + (items.length!==1?"s":"") + " encontrado" + (items.length!==1?"s":"");
+
+  const grilla = document.getElementById("grilla");
+  if (!items.length) { grilla.innerHTML = '<div class="vacio">No se encontraron resultados.</div>'; return; }
+
+  grilla.innerHTML = items.map(d => {
+    const idx = EMPRENDIMIENTOS.indexOf(d);
+    return `<div class="tarjeta" onclick="abrirModal(${idx})">
+      <span class="etiqueta" style="${estiloEtiqueta(d.rubro)}">${d.rubro}</span>
+      <div class="tarjeta-nombre">${d.nombre}</div>
+      <div class="tarjeta-persona">${[d.persona,d.grado].filter(Boolean).join(" · ")}</div>
+      ${d.desc?`<div class="tarjeta-desc">${d.desc.replace(/\n/g," ")}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+function abrirModal(idx) {
+  const d = EMPRENDIMIENTOS[idx];
+  let links = "";
+  if (d.ig)   links += `<div class="modal-link"><span>📷</span><span>Instagram: ${d.ig}</span></div>`;
+  if (d.web)  links += `<div class="modal-link"><span>🌐</span><a href="${d.web.startsWith("http")?d.web:"https://"+d.web}" target="_blank" rel="noopener">${d.web}</a></div>`;
+  if (d.mail) links += `<div class="modal-link"><span>✉️</span><a href="mailto:${d.mail.trim()}">${d.mail.trim()}</a></div>`;
+  if (d.tel)  links += `<div class="modal-link"><span>📞</span><span>${d.tel}</span></div>`;
+  document.getElementById("modal-interior").innerHTML = `
+    <span class="modal-etiqueta" style="${estiloEtiqueta(d.rubro)}">${d.rubro}</span>
+    <div class="modal-nombre">${d.nombre}</div>
+    <div class="modal-persona">${[d.persona,d.grado].filter(Boolean).join(" · ")}</div>
+    ${d.desc?`<div class="modal-desc">${d.desc}</div>`:""}
+    ${links?`<div class="modal-links">${links}</div>`:""}
+  `;
+  document.getElementById("modal-fondo").classList.add("abierto");
+}
+
+function cerrarModal() { document.getElementById("modal-fondo").classList.remove("abierto"); }
+document.addEventListener("keydown", e => { if (e.key==="Escape") cerrarModal(); });
+
+renderRubros();
+renderGrilla();
+</script>
+</body>
+</html>
